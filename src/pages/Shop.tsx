@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardFooter } from '../components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { ShoppingCart } from 'lucide-react';
 
 const PRODUCTS = [
@@ -21,12 +22,26 @@ const CATEGORIES = [
   { id: 'traditional', name: 'Traditional Wears' },
 ];
 
+const parsePrice = (priceStr: string) => parseInt(priceStr.replace(/[^\d]/g, ''), 10);
+
 export default function Shop() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('default');
 
   const filteredProducts = activeCategory === 'all' 
     ? PRODUCTS 
     : PRODUCTS.filter(p => p.category === activeCategory);
+
+  let sortedProducts = [...filteredProducts];
+  if (sortBy === 'price-asc') {
+    sortedProducts.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
+  } else if (sortBy === 'price-desc') {
+    sortedProducts.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+  } else if (sortBy === 'name-asc') {
+    sortedProducts.sort((a, b) => a.title.localeCompare(b.title));
+  } else if (sortBy === 'name-desc') {
+    sortedProducts.sort((a, b) => b.title.localeCompare(a.title));
+  }
 
   return (
     <div className="py-12 bg-background">
@@ -39,23 +54,42 @@ export default function Shop() {
           </p>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {CATEGORIES.map(cat => (
-            <Button
-              key={cat.id}
-              variant={activeCategory === cat.id ? "default" : "outline"}
-              onClick={() => setActiveCategory(cat.id)}
-              className={activeCategory === cat.id ? "bg-primary text-primary-foreground" : "border-primary text-primary"}
-            >
-              {cat.name}
-            </Button>
-          ))}
+        {/* Filter and Sort Controls */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+          {/* Category Filter */}
+          <div className="flex flex-wrap justify-center gap-4">
+            {CATEGORIES.map(cat => (
+              <Button
+                key={cat.id}
+                variant={activeCategory === cat.id ? "default" : "outline"}
+                onClick={() => setActiveCategory(cat.id)}
+                className={activeCategory === cat.id ? "bg-primary text-primary-foreground" : "border-primary text-primary"}
+              >
+                {cat.name}
+              </Button>
+            ))}
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="w-full md:w-56">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="border-primary text-primary">
+                <SelectValue placeholder="Sort by..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default Sorting</SelectItem>
+                <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                <SelectItem value="name-asc">Alphabetical: A-Z</SelectItem>
+                <SelectItem value="name-desc">Alphabetical: Z-A</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Product Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredProducts.map(product => (
+          {sortedProducts.map(product => (
             <Card key={product.id} className="overflow-hidden border-border group">
               <div className="relative aspect-[3/4] overflow-hidden bg-muted">
                 <img 
